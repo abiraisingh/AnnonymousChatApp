@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { motion } from "framer-motion";
 import { ArrowLeft, Sparkles } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useServerFn } from "@tanstack/react-start";
@@ -45,7 +44,7 @@ function PostPage() {
   }
 
   return (
-    <main className="mx-auto max-w-md px-4 pt-6">
+    <main className="mx-auto max-w-3xl px-4 pt-6 lg:pt-10">
       <header className="flex items-center gap-3 mb-5">
         <button onClick={() => navigate({ to: "/feed" })} className="size-10 rounded-full glass flex items-center justify-center">
           <ArrowLeft className="size-4" />
@@ -53,8 +52,7 @@ function PostPage() {
         <h1 className="text-xl font-bold">New confession</h1>
       </header>
 
-      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
-        className="glass-strong rounded-3xl p-5">
+      <div className="glass-strong animate-float-up rounded-3xl p-5">
         <textarea value={body} onChange={(e) => setBody(e.target.value)}
           maxLength={2000} rows={7} autoFocus
           placeholder="What do you want to confess? It stays anonymous."
@@ -63,7 +61,7 @@ function PostPage() {
           <span className="flex items-center gap-1"><Sparkles className="size-3" /> AI-moderated</span>
           <span>{body.length}/2000</span>
         </div>
-      </motion.div>
+      </div>
 
       <section className="mt-5">
         <h2 className="text-xs uppercase tracking-wider text-muted-foreground mb-2">Category</h2>

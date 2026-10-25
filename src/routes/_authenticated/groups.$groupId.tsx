@@ -1,11 +1,15 @@
 import { useEffect, useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { motion } from "framer-motion";
 import { ArrowLeft, Send, Hash, Users } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { ConfessionCard, type ConfessionRow } from "@/components/app/ConfessionCard";
-import { useCurrentUserId, useProfilesByIds } from "@/hooks/useProfile";
+import {
+  EMPTY_CONFESSION_INTERACTIONS,
+  useConfessionInteractions,
+  useCurrentUserId,
+  useProfilesByIds,
+} from "@/hooks/useProfile";
 import { Username } from "@/components/app/Username";
 import { CATEGORIES, type Category } from "@/lib/categories";
 import { toast } from "sonner";
@@ -56,6 +60,8 @@ function GroupPage() {
       return data as ConfessionRow[];
     },
   });
+  const interactionsQ = useConfessionInteractions(postsQ.data ?? [], me);
+  const interactions = interactionsQ.data ?? EMPTY_CONFESSION_INTERACTIONS;
 
   // group chat thread (auto-create if missing & member)
   const threadQ = useQuery({
@@ -89,7 +95,7 @@ function GroupPage() {
   if (!groupQ.data) return <main className="px-4 pt-6"><div className="glass rounded-3xl h-40 animate-pulse" /></main>;
 
   return (
-    <main className="mx-auto max-w-md px-4 pt-6">
+    <main className="mx-auto max-w-5xl px-4 pt-6 lg:pt-10">
       <header className="flex items-center gap-3 mb-4">
         <button onClick={() => navigate({ to: "/groups" })} className="size-10 rounded-full glass flex items-center justify-center">
           <ArrowLeft className="size-4" />
@@ -138,7 +144,9 @@ function GroupPage() {
           {postsQ.data?.length === 0 && (
             <div className="glass rounded-3xl p-6 text-center text-sm text-muted-foreground">Be the first to post.</div>
           )}
-          {postsQ.data?.map((c, i) => <ConfessionCard key={c.id} confession={c} index={i} />)}
+          {postsQ.data?.map((c, i) => (
+            <ConfessionCard key={c.id} confession={c} index={i} interactions={interactions} />
+          ))}
         </div>
       )}
 
@@ -242,13 +250,12 @@ function GroupChat({ threadId }: { threadId: string }) {
           const mine = m.sender_id === me;
           const p = profs.data?.get(m.sender_id);
           return (
-            <motion.div key={m.id} initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }}
-              className={`flex flex-col ${mine ? "items-end" : "items-start"}`}>
+            <div key={m.id} className={`animate-float-up flex flex-col ${mine ? "items-end" : "items-start"}`}>
               {!mine && <Username anonNumber={p?.anon_number} className="text-[10px] mb-0.5" />}
               <div className={`rounded-2xl px-3 py-2 text-sm max-w-[80%] ${mine ? "gradient-primary-bg text-primary-foreground" : "glass"}`}>
                 {m.body}
               </div>
-            </motion.div>
+            </div>
           );
         })}
       </div>

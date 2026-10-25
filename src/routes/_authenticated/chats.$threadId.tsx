@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { motion } from "framer-motion";
 import { ArrowLeft, Send } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Username } from "@/components/app/Username";
@@ -81,7 +80,7 @@ function ChatPage() {
   }
 
   return (
-    <main className="mx-auto max-w-md px-4 pt-6 flex flex-col h-[100vh] pb-32">
+    <main className="mx-auto max-w-5xl px-4 pt-6 flex flex-col h-[100vh] pb-32 lg:pb-6">
       <header className="flex items-center gap-3 mb-3">
         <button onClick={() => navigate({ to: "/chats" })} className="size-10 rounded-full glass flex items-center justify-center">
           <ArrowLeft className="size-4" />
@@ -104,12 +103,11 @@ function ChatPage() {
         {msgsQ.data?.map((m) => {
           const mine = m.sender_id === me;
           return (
-            <motion.div key={m.id} initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }}
-              className={`flex ${mine ? "justify-end" : "justify-start"}`}>
+            <div key={m.id} className={`animate-float-up flex ${mine ? "justify-end" : "justify-start"}`}>
               <div className={`rounded-2xl px-3.5 py-2 text-sm max-w-[80%] ${mine ? "gradient-primary-bg text-primary-foreground" : "glass"}`}>
                 {m.body}
               </div>
-            </motion.div>
+            </div>
           );
         })}
         <div ref={bottomRef} />

@@ -1,7 +1,6 @@
 import { useState } from "react";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, Outlet, useRouterState } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { motion } from "framer-motion";
 import { Plus, Users, Lock, KeyRound } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentUserId } from "@/hooks/useProfile";
@@ -13,6 +12,14 @@ export const Route = createFileRoute("/_authenticated/groups")({
 });
 
 function GroupsPage() {
+  const isGroupsList = useRouterState({
+    select: (state) => state.location.pathname.replace(/\/+$/, "") === "/groups",
+  });
+
+  return isGroupsList ? <GroupsList /> : <Outlet />;
+}
+
+function GroupsList() {
   const me = useCurrentUserId();
   const qc = useQueryClient();
   const [creating, setCreating] = useState(false);
@@ -78,7 +85,7 @@ function GroupsPage() {
   });
 
   return (
-    <main className="mx-auto max-w-md px-4 pt-6">
+    <main className="mx-auto max-w-5xl px-4 pt-6 lg:pt-10">
       <header className="flex items-center justify-between mb-4">
         <h1 className="text-2xl font-bold gradient-text">Groups</h1>
         <button onClick={() => setCreating(true)} className="size-10 rounded-full gradient-primary-bg flex items-center justify-center text-primary-foreground">
@@ -105,8 +112,8 @@ function GroupsPage() {
         {groupsQ.data?.map((g, i) => {
           const joined = myMembershipQ.data?.has(g.id);
           return (
-            <motion.div key={g.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.03 }}
-              className="glass rounded-3xl p-4 flex items-center gap-3">
+            <div key={g.id} style={{ animationDelay: `${i * 0.03}s` }}
+              className="glass animate-float-up rounded-3xl p-4 flex items-center gap-3">
               <div className="size-12 rounded-2xl gradient-primary-bg flex items-center justify-center text-primary-foreground font-bold">
                 {g.name.charAt(0).toUpperCase()}
               </div>
@@ -125,7 +132,7 @@ function GroupsPage() {
               ) : (
                 <button onClick={() => joinPublic.mutate(g.id)} className="text-xs px-3 py-1.5 rounded-full gradient-primary-bg text-primary-foreground font-semibold">Join</button>
               )}
-            </motion.div>
+            </div>
           );
         })}
       </div>
@@ -162,8 +169,7 @@ function CreateGroupModal({ onClose, onCreated }: { onClose: () => void; onCreat
 
   return (
     <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-md flex items-end sm:items-center justify-center p-4" onClick={onClose}>
-      <motion.div initial={{ y: 30, opacity: 0 }} animate={{ y: 0, opacity: 1 }}
-        onClick={(e) => e.stopPropagation()} className="glass-strong rounded-3xl p-6 w-full max-w-md">
+      <div onClick={(e) => e.stopPropagation()} className="glass-strong animate-float-up rounded-3xl p-6 w-full max-w-md">
         <h2 className="text-lg font-bold mb-4 flex items-center gap-2"><Users className="size-4" /> Create group</h2>
         <div className="space-y-3">
           <input placeholder="Group name" value={name} onChange={(e) => setName(e.target.value)}
@@ -183,7 +189,7 @@ function CreateGroupModal({ onClose, onCreated }: { onClose: () => void; onCreat
             {loading ? "Creating…" : "Create"}
           </button>
         </div>
-      </motion.div>
+      </div>
     </div>
   );
 }

@@ -48,3 +48,69 @@ export function useProfilesByIds(ids: string[]) {
     },
   });
 }
+
+type ConfessionReference = { id: string; author_id: string };
+
+export type ConfessionInteractions = {
+  profiles: Map<string, { id: string; anon_number: number; is_guest: boolean }>;
+  reactions: { confession_id: string; kind: string; user_id: string }[];
+  bookmarkedIds: Set<string>;
+};
+
+export const EMPTY_CONFESSION_INTERACTIONS: ConfessionInteractions = {
+  profiles: new Map(),
+  reactions: [],
+  bookmarkedIds: new Set(),
+};
+
+export function useConfessionInteractions(confessions: ConfessionReference[], userId: string | null) {
+  const confessionIds = Array.from(new Set(confessions.map((confession) => confession.id))).sort();
+  const authorIds = Array.from(new Set(confessions.map((confession) => confession.author_id))).sort();
+
+  const interactionQuery = useQuery({
+    queryKey: ["confession-interactions", confessionIds.join(","), authorIds.join(",")],
+    enabled: confessionIds.length > 0,
+    staleTime: 30_000,
+    queryFn: async () => {
+      const [profilesResult, reactionsResult] = await Promise.all([
+        supabase
+          .from("profiles")
+          .select("id, anon_number, is_guest")
+          .in("id", authorIds),
+        supabase
+          .from("reactions")
+          .select("confession_id, kind, user_id")
+          .in("confession_id", confessionIds),
+      ]);
+
+      if (profilesResult.error) throw profilesResult.error;
+      if (reactionsResult.error) throw reactionsResult.error;
+
+      return {
+        profiles: new Map(profilesResult.data.map((profile) => [profile.id, profile] as const)),
+        reactions: reactionsResult.data,
+      };
+    },
+  });
+
+  const bookmarksQuery = useQuery({
+    queryKey: ["confession-bookmarks", confessionIds.join(","), userId],
+    enabled: confessionIds.length > 0 && !!userId,
+    staleTime: 30_000,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("bookmarks")
+        .select("confession_id")
+        .eq("user_id", userId!)
+        .in("confession_id", confessionIds);
+      if (error) throw error;
+      return new Set((data ?? []).map((bookmark) => bookmark.confession_id));
+    },
+  });
+
+  return {
+    data: interactionQuery.data
+      ? { ...interactionQuery.data, bookmarkedIds: bookmarksQuery.data ?? EMPTY_CONFESSION_INTERACTIONS.bookmarkedIds }
+      : undefined,
+  };
+}

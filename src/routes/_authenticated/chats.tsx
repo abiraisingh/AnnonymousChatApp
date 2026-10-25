@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, Outlet, useRouterState } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { MessagesSquare } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -12,6 +12,14 @@ export const Route = createFileRoute("/_authenticated/chats")({
 });
 
 function ChatsPage() {
+  const isChatList = useRouterState({
+    select: (state) => state.location.pathname.replace(/\/+$/, "") === "/chats",
+  });
+
+  return isChatList ? <ChatsList /> : <Outlet />;
+}
+
+function ChatsList() {
   const me = useCurrentUserId();
 
   const threadsQ = useQuery({
@@ -54,7 +62,7 @@ function ChatsPage() {
   const profs = useProfilesByIds(otherIds);
 
   return (
-    <main className="mx-auto max-w-md px-4 pt-6">
+    <main className="mx-auto max-w-5xl px-4 pt-6 lg:pt-10">
       <h1 className="text-2xl font-bold gradient-text mb-4">Chats</h1>
       <div className="space-y-2 pb-6">
         {threadsQ.isLoading && <div className="glass rounded-3xl h-20 animate-pulse" />}

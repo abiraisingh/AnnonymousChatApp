@@ -1,14 +1,17 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
-import { motion } from "framer-motion";
 import { Heart, MessageCircle, Bookmark, Share2, Flag, MoreHorizontal } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useServerFn } from "@tanstack/react-start";
 import { openPrivateReplyThread } from "@/lib/threads.functions";
 import { REACTIONS, type ReactionKind } from "@/lib/categories";
 import { Username } from "./Username";
-import { useCurrentUserId, useProfilesByIds } from "@/hooks/useProfile";
+import {
+  useCurrentUserId,
+  useProfilesByIds,
+  type ConfessionInteractions,
+} from "@/hooks/useProfile";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
 
@@ -22,18 +25,51 @@ export type ConfessionRow = {
   created_at: string;
 };
 
-export function ConfessionCard({ confession, index = 0 }: { confession: ConfessionRow; index?: number }) {
+export function ConfessionCard({
+  confession,
+  index = 0,
+  interactions,
+}: {
+  confession: ConfessionRow;
+  index?: number;
+  interactions?: ConfessionInteractions;
+}) {
   const qc = useQueryClient();
   const navigate = useNavigate();
   const me = useCurrentUserId();
   const openThread = useServerFn(openPrivateReplyThread);
-  const profilesQ = useProfilesByIds([confession.author_id]);
-  const author = profilesQ.data?.get(confession.author_id);
+  const profilesQ = useProfilesByIds(interactions ? [] : [confession.author_id]);
+  const author = interactions?.profiles.get(confession.author_id) ?? profilesQ.data?.get(confession.author_id);
   const [reportOpen, setReportOpen] = useState(false);
   const [replyLoading, setReplyLoading] = useState(false);
+  const reportMenuRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (!reportOpen) return;
+
+    const handlePointerDown = (event: MouseEvent) => {
+      const target = event.target as Node | null;
+      if (target && reportMenuRef.current && !reportMenuRef.current.contains(target)) {
+        setReportOpen(false);
+      }
+    };
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setReportOpen(false);
+    };
+
+    document.addEventListener("pointerdown", handlePointerDown);
+    document.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.removeEventListener("pointerdown", handlePointerDown);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [reportOpen]);
 
   const reactionsQ = useQuery({
     queryKey: ["reactions", confession.id],
+    enabled: !interactions,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("reactions").select("kind, user_id").eq("confession_id", confession.id);
@@ -45,7 +81,7 @@ export function ConfessionCard({ confession, index = 0 }: { confession: Confessi
 
   const bookmarkedQ = useQuery({
     queryKey: ["bookmark", confession.id, me],
-    enabled: !!me,
+    enabled: !!me && !interactions,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("bookmarks").select("user_id").eq("user_id", me!).eq("confession_id", confession.id).maybeSingle();
@@ -54,10 +90,14 @@ export function ConfessionCard({ confession, index = 0 }: { confession: Confessi
     },
   });
 
-  const counts = (reactionsQ.data ?? []).reduce<Record<string, number>>((acc, r) => {
+  const reactionRows = interactions?.reactions.filter((reaction) => reaction.confession_id === confession.id)
+    ?? reactionsQ.data
+    ?? [];
+  const isBookmarked = interactions?.bookmarkedIds.has(confession.id) ?? bookmarkedQ.data;
+  const counts = reactionRows.reduce<Record<string, number>>((acc, r) => {
     acc[r.kind] = (acc[r.kind] ?? 0) + 1; return acc;
   }, {});
-  const myReactions = new Set((reactionsQ.data ?? []).filter((r) => r.user_id === me).map((r) => r.kind));
+  const myReactions = new Set(reactionRows.filter((r) => r.user_id === me).map((r) => r.kind));
 
   const toggleReaction = useMutation({
     mutationFn: async (kind: ReactionKind) => {
@@ -72,14 +112,16 @@ export function ConfessionCard({ confession, index = 0 }: { confession: Confessi
         if (error) throw error;
       }
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["reactions", confession.id] }),
+    onSuccess: () => qc.invalidateQueries({
+      queryKey: interactions ? ["confession-interactions"] : ["reactions", confession.id],
+    }),
     onError: (e: any) => toast.error(e.message),
   });
 
   const toggleBookmark = useMutation({
     mutationFn: async () => {
       if (!me) throw new Error("Sign in required");
-      if (bookmarkedQ.data) {
+      if (isBookmarked) {
         const { error } = await supabase
           .from("bookmarks").delete().eq("user_id", me).eq("confession_id", confession.id);
         if (error) throw error;
@@ -89,7 +131,9 @@ export function ConfessionCard({ confession, index = 0 }: { confession: Confessi
         if (error) throw error;
       }
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["bookmark", confession.id] }),
+    onSuccess: () => qc.invalidateQueries({
+      queryKey: interactions ? ["confession-bookmarks"] : ["bookmark", confession.id],
+    }),
   });
 
   async function replyPrivately() {
@@ -135,10 +179,9 @@ export function ConfessionCard({ confession, index = 0 }: { confession: Confessi
   const totalReactions = Object.values(counts).reduce((a, b) => a + b, 0);
 
   return (
-    <motion.article
-      initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3, delay: Math.min(index * 0.03, 0.2) }}
-      className="glass rounded-3xl p-5 relative"
+    <article
+      style={{ animationDelay: `${Math.min(index * 0.03, 0.2)}s` }}
+      className={`glass animate-float-up relative rounded-3xl p-5 ${reportOpen ? "z-20" : "z-0"}`}
     >
       <header className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-3">
@@ -155,7 +198,16 @@ export function ConfessionCard({ confession, index = 0 }: { confession: Confessi
             </div>
           </div>
         </div>
-        <button onClick={() => setReportOpen((v) => !v)} className="p-2 rounded-full hover:bg-accent/50 text-muted-foreground">
+        <button
+          type="button"
+          aria-expanded={reportOpen}
+          aria-haspopup="menu"
+          onClick={(event) => {
+            event.stopPropagation();
+            setReportOpen((v) => !v);
+          }}
+          className="p-2 rounded-full hover:bg-accent/50 text-muted-foreground"
+        >
           <MoreHorizontal className="size-4" />
         </button>
       </header>
@@ -192,8 +244,8 @@ export function ConfessionCard({ confession, index = 0 }: { confession: Confessi
             <Heart className="size-4" /> <span className="text-xs">{likeCount || totalReactions}</span>
           </button>
           <button onClick={() => toggleBookmark.mutate()}
-            className={`p-2 rounded-full hover:bg-accent/50 ${bookmarkedQ.data ? "text-primary" : ""}`}>
-            <Bookmark className="size-4" fill={bookmarkedQ.data ? "currentColor" : "none"} />
+            className={`p-2 rounded-full hover:bg-accent/50 ${isBookmarked ? "text-primary" : ""}`}>
+            <Bookmark className="size-4" fill={isBookmarked ? "currentColor" : "none"} />
           </button>
           <button onClick={share} className="p-2 rounded-full hover:bg-accent/50">
             <Share2 className="size-4" />
@@ -202,15 +254,19 @@ export function ConfessionCard({ confession, index = 0 }: { confession: Confessi
       </footer>
 
       {reportOpen && (
-        <div className="absolute right-4 top-12 glass-strong rounded-2xl p-2 z-10 text-sm w-44 animate-float-up">
+        <div
+          ref={reportMenuRef}
+          className="absolute right-4 top-12 glass-strong z-[70] w-44 rounded-2xl p-2 text-sm animate-float-up shadow-2xl"
+          role="menu"
+        >
           {["Spam", "Harassment", "Hate speech", "NSFW", "Violence", "False info"].map((r) => (
-            <button key={r} onClick={() => report(r)}
+            <button key={r} type="button" onClick={() => report(r)}
               className="w-full text-left px-3 py-2 rounded-xl hover:bg-accent/60 flex items-center gap-2">
               <Flag className="size-3.5" /> {r}
             </button>
           ))}
         </div>
       )}
-    </motion.article>
+    </article>
   );
 }

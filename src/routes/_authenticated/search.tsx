@@ -5,6 +5,11 @@ import { ArrowLeft, Search as SearchIcon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { ConfessionCard, type ConfessionRow } from "@/components/app/ConfessionCard";
 import { Username } from "@/components/app/Username";
+import {
+  EMPTY_CONFESSION_INTERACTIONS,
+  useConfessionInteractions,
+  useCurrentUserId,
+} from "@/hooks/useProfile";
 
 export const Route = createFileRoute("/_authenticated/search")({
   head: () => ({ meta: [{ title: "Search — Whisper" }] }),
@@ -13,6 +18,7 @@ export const Route = createFileRoute("/_authenticated/search")({
 
 function SearchPage() {
   const navigate = useNavigate();
+  const me = useCurrentUserId();
   const [q, setQ] = useState("");
 
   const numMatch = q.match(/^user\s*(\d+)$/i);
@@ -50,8 +56,11 @@ function SearchPage() {
     },
   });
 
+  const interactionsQ = useConfessionInteractions(confessionsQ.data ?? [], me);
+  const interactions = interactionsQ.data ?? EMPTY_CONFESSION_INTERACTIONS;
+
   return (
-    <main className="mx-auto max-w-md px-4 pt-6">
+    <main className="mx-auto max-w-5xl px-4 pt-6 lg:pt-10">
       <header className="flex items-center gap-2 mb-4">
         <button onClick={() => navigate({ to: "/feed" })} className="size-10 rounded-full glass flex items-center justify-center">
           <ArrowLeft className="size-4" />
@@ -95,7 +104,9 @@ function SearchPage() {
         <section>
           <h2 className="text-xs uppercase tracking-wider text-muted-foreground mb-2">Confessions</h2>
           <div className="space-y-3 pb-6">
-            {confessionsQ.data.map((c, i) => <ConfessionCard key={c.id} confession={c} index={i} />)}
+            {confessionsQ.data.map((c, i) => (
+              <ConfessionCard key={c.id} confession={c} index={i} interactions={interactions} />
+            ))}
           </div>
         </section>
       )}

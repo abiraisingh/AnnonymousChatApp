@@ -53,7 +53,7 @@ function ProfilePage() {
   }
 
   return (
-    <main className="mx-auto max-w-md px-4 pt-6">
+    <main className="mx-auto max-w-5xl px-4 pt-6 lg:pt-10">
       <header className="text-center mb-6">
         <div className="size-20 rounded-full gradient-primary-bg ring-glow flex items-center justify-center text-2xl font-bold text-primary-foreground mx-auto">
           {(p?.anon_number ?? "?").toString().slice(-2)}
