@@ -1,0 +1,183 @@
+@import "tailwindcss" source(none);
+@source "../src";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+/* ===========================================================
+  Whisper — a calm, private journal for honest conversations.
+  =========================================================== */
+
+@theme inline {
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+  --radius-3xl: calc(var(--radius) + 16px);
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-glass: var(--glass);
+  --color-glass-border: var(--glass-border);
+  --color-highlight: var(--highlight);
+
+  --font-display: "Lora", Georgia, serif;
+  --font-sans: "EB Garamond", Garamond, Georgia, serif;
+}
+
+:root,
+.dark {
+  --radius: 0.625rem;
+
+  /* Dark surfaces with high-contrast text */
+  --background: oklch(0.13 0.006 270);
+  --foreground: oklch(0.98 0 0);
+
+  --card: oklch(0.18 0.008 270);
+  --card-foreground: oklch(0.98 0 0);
+
+  --popover: oklch(0.18 0.008 270);
+  --popover-foreground: oklch(0.98 0 0);
+
+  --muted: oklch(0.24 0.008 270);
+  --muted-foreground: oklch(0.76 0 0);
+
+  --secondary: oklch(0.23 0.008 270);
+  --secondary-foreground: oklch(0.96 0 0);
+
+  --accent: oklch(0.32 0.12 25);
+  --accent-foreground: oklch(0.98 0 0);
+
+  --primary: oklch(0.58 0.22 25);
+  --primary-foreground: oklch(0.99 0 0);
+
+  --destructive: oklch(0.62 0.23 25);
+  --destructive-foreground: oklch(0.99 0 0);
+
+  --border: oklch(0.32 0.01 270);
+  --input: oklch(0.25 0.008 270);
+  --ring: oklch(0.64 0.23 25 / 75%);
+
+  --glass: oklch(0.18 0.008 270 / 94%);
+  --glass-border: oklch(0.9 0 0 / 10%);
+
+  --highlight: oklch(0.64 0.23 25);
+
+  --gradient-primary: linear-gradient(135deg, oklch(0.54 0.22 27), var(--highlight));
+  --gradient-warm: linear-gradient(135deg, var(--highlight), oklch(0.68 0.22 20));
+  --gradient-surface: linear-gradient(145deg, oklch(0.16 0.008 270), oklch(0.11 0.006 270));
+
+  --shadow-glass: 0 8px 24px oklch(0 0 0 / 40%), inset 0 1px 0 oklch(1 0 0 / 5%);
+  --shadow-glow: 0 5px 18px oklch(0.62 0.23 25 / 32%);
+}
+
+@theme inline {
+  --radius-xl: 0.75rem;
+  --radius-2xl: 1rem;
+  --radius-3xl: 1.25rem;
+}
+
+@layer base {
+  * {
+    border-color: var(--color-border);
+  }
+  html,
+  body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  body {
+    background-image: var(--gradient-surface);
+    background-attachment: fixed;
+    min-height: 100vh;
+  }
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: var(--font-display);
+    letter-spacing: -0.01em;
+  }
+
+  ::selection {
+    background: oklch(0.62 0.23 25 / 40%);
+    color: var(--color-foreground);
+  }
+  :focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
+}
+
+@utility glass {
+  background-color: var(--glass);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--shadow-glass);
+}
+
+@utility glass-strong {
+  background-color: oklch(0.19 0.008 270 / 98%);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--shadow-glass);
+}
+
+@utility gradient-text {
+  background: var(--gradient-primary);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+@utility gradient-primary-bg {
+  background: var(--gradient-primary);
+}
+
+@utility ring-glow {
+  box-shadow: var(--shadow-glow);
+}
+
+@keyframes float-up {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.animate-float-up {
+  animation: float-up 0.25s ease-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
