@@ -45,6 +45,8 @@ The app listens on Vite's development port. Guest accounts are tied to the brows
 
 Migrations are ordered SQL files in `backend/db/migrations`. The migration runner records applied filenames and runs each migration transactionally. Run migrations once per deployment, not once per application replica.
 
+The migration sequence adds six sample confessions from non-login guest accounts to the public feed. These demo posts are visible in every environment where migrations are applied.
+
 ## Security and operations
 
 - Passwords use Node's `scrypt`; session tokens are random, stored only as hashes in PostgreSQL, and sent in `HttpOnly`, `SameSite=Lax` cookies.
