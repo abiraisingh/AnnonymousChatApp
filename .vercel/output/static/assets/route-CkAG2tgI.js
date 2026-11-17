@@ -1,0 +1,1 @@
+import{T as e}from"./index-pcuyMrBT.js";import{t}from"./AppShell-Clktsn06.js";import{r as n}from"./useRouter-CWdI4RFr.js";var r=n();function i(){return(0,r.jsx)(t,{children:(0,r.jsx)(e,{})})}export{i as component};

@@ -1,0 +1,1 @@
+var e=[`Love`,`Relationships`,`College`,`Career`,`Family`,`Mental Health`,`Work`,`Gaming`,`Technology`,`Random`],t=[`😊`,`😔`,`😡`,`😢`,`😂`,`😍`,`😭`,`🤔`,`😮`,`🙏`],n=[{kind:`like`,emoji:`❤️`},{kind:`funny`,emoji:`😂`},{kind:`sad`,emoji:`😢`},{kind:`wow`,emoji:`😮`},{kind:`support`,emoji:`👏`}];export{t as n,n as r,e as t};
